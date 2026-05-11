@@ -137,7 +137,7 @@
         .badge-stock{background:rgba(201,168,76,0.15);color:#c9a84c}
         .badge-fund{background:rgba(34,197,94,0.15);color:#22c55e}
         .badge-bond{background:rgba(59,130,246,0.15);color:#3b82f6}
-        .badge-cash{background:rgba(52,211,153,0.15);color:#34d399}
+        .badge-cash{background:rgba(56,189,248,0.15);color:#38bdf8}
         .badge-gold{background:rgba(251,191,36,0.15);color:#fbbf24}
         .badge-insurance{background:rgba(244,114,182,0.15);color:#f472b6}
         .badge-other{background:rgba(167,139,250,0.15);color:#a78bfa}
@@ -374,7 +374,7 @@ const CAT = {
     stock:   { name:'股票',     color:'#c9a84c', badge:'badge-stock' },
     fund:    { name:'基金',     color:'#22c55e', badge:'badge-fund' },
     bond:    { name:'债券/理财', color:'#3b82f6', badge:'badge-bond' },
-    cash:    { name:'现金',     color:'#34d399', badge:'badge-cash' },
+    cash:    { name:'现金',     color:'#38bdf8', badge:'badge-cash' },
     gold:    { name:'黄金',     color:'#fbbf24', badge:'badge-gold' },
     insurance:{ name:'保险',    color:'#f472b6', badge:'badge-insurance' },
     other:   { name:'其他',     color:'#a78bfa', badge:'badge-other' }
@@ -644,7 +644,7 @@ function renderTrendChart() {
     charts.trend = new Chart(document.getElementById('chart-trend'), {
         type:'line',
         data: { labels:ss.length?ss.map(s=>s.date):['暂无数据'], datasets:[{label:'净资产',data:ss.length?ss.map(s=>s.netWorth):[0],borderColor:'#c9a84c',backgroundColor:'rgba(201,168,76,0.08)',fill:true,tension:0.4,pointRadius:ss.length?(isMobile()?3:5):0,pointBackgroundColor:'#c9a84c',pointBorderColor:'#0b0d14',pointBorderWidth:2}] },
-        options: { responsive:true, maintainAspectRatio:false, scales:{ x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555766',font:{family:'DM Mono',size:isMobile()?9:11},maxRotation:45}}, y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555766',font:{family:'DM Mono',size:isMobile()?9:11},callback:v=>fm(v,true)}} }, plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'净资产: '+fm(c.raw)}}} }
+        options: { responsive:true, maintainAspectRatio:false, scales:{ x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555766',font:{family:'DM Mono',size:isMobile()?9:11},maxRotation:45}}, y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555766',font:{family:'DM Mono',size:isMobile()?9:11},callback:v=>fm(v,true)}} }, plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'净资产: '+fm(c.raw,true)}}} }
     });
 }
 function renderDashHoldings() {
