@@ -644,7 +644,7 @@ function renderTrendChart() {
     charts.trend = new Chart(document.getElementById('chart-trend'), {
         type:'line',
         data: { labels:ss.length?ss.map(s=>s.date):['暂无数据'], datasets:[{label:'净资产',data:ss.length?ss.map(s=>s.netWorth):[0],borderColor:'#c9a84c',backgroundColor:'rgba(201,168,76,0.08)',fill:true,tension:0.4,pointRadius:ss.length?(isMobile()?3:5):0,pointBackgroundColor:'#c9a84c',pointBorderColor:'#0b0d14',pointBorderWidth:2}] },
-        options: { responsive:true, maintainAspectRatio:false, scales:{ x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555766',font:{family:'DM Mono',size:isMobile()?9:11},maxRotation:45}}, y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555766',font:{family:'DM Mono',size:isMobile()?9:11},callback:v=>fm(v,true)}} }, plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'净资产: '+fm(c.raw,true)}}} }
+        options: { responsive:true, maintainAspectRatio:false, scales:{ x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555766',font:{family:'DM Mono',size:isMobile()?9:11},maxRotation:45}}, y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555766',font:{family:'DM Mono',size:isMobile()?9:11},callback:v=>fm(v,true)}} }, plugins:{legend:{display:false},datalabels:{display:false},tooltip:{callbacks:{label:c=>'净资产: '+fm(c.raw,true)}}} }
     });
 }
 function renderDashHoldings() {
