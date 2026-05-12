@@ -676,37 +676,52 @@ function renderDashHoldings() {
 
 // ===================== HOLDINGS =====================
 function renderHoldings() {
-    const fa=document.getElementById('filter-account'), cv=fa.value;
-    fa.innerHTML = '<option value="">全部账户</option>'+S.accounts.map(a=>'<option value="'+a.id+'"'+(a.id===cv?' selected':'')+'>'+a.name+'</option>').join('');
-    const af=fa.value, cf=document.getElementById('filter-category').value;
-    let f=S.holdings; if(af) f=f.filter(h=>h.accountId===af); if(cf) f=f.filter(h=>h.category===cf);
+    var fa=document.getElementById('filter-account'), cv=fa.value;
+    fa.innerHTML = '<option value="">全部账户</option>'+S.accounts.map(function(a){return '<option value="'+a.id+'"'+(a.id===cv?' selected':'')+'>'+a.name+'</option>'}).join('');
+    var af=fa.value, cf=document.getElementById('filter-category').value;
+    var f=S.holdings.slice(); if(af) f=f.filter(function(h){return h.accountId===af}); if(cf) f=f.filter(function(h){return h.category===cf});
 
-    const body = document.getElementById('holdings-body');
+    var body = document.getElementById('holdings-body');
     if(!f.length) { body.innerHTML='<tr><td colspan="11" class="text-muted" style="text-align:center;padding:40px">暂无持仓</td></tr>'; }
-    else { body.innerHTML = f.map(h => {
-        const mv=hVal(h), cost=hCost(h), pnl=mv-cost, pP=cost>0?(pnl/cost*100):0, cat=CAT[h.category]||CAT.other, cur=h.currency||'CNY';
-        return '<tr>'<td><strong>'+h.name+'</strong>'+(_priceFailed[h.id]?' <span title="'+_priceFailed[h.id]+'" style="color:var(--danger);font-size:0.75rem">⚠更新失败</span>':'')+(cur!=='CNY'?' <span class="badge-cur">'+cur+'</span>':'')+'</td>'+
-            '<td class="mono text-muted">'+(h.code||'-')+'</td><td><span class="badge '+cat.badge+'">'+cat.name+'</span></td>'+
-            '<td class="text-muted">'+accN(h.accountId)+'</td><td class="mono">'+(h.shares>1?h.shares.toLocaleString():'-')+'</td>'+
-            '<td class="mono">'+fmRaw(h.costPrice,cur)+'</td><td class="mono">'+fmRaw(h.currentPrice,cur)+'</td>'+
+    else { body.innerHTML = f.map(function(h) {
+        var mv=hVal(h), cost=hCost(h), pnl=mv-cost, pP=cost>0?(pnl/cost*100):0, cat=CAT[h.category]||CAT.other, cur=h.currency||'CNY';
+        var failMark = _priceFailed[h.id] ? ' <span title="'+_priceFailed[h.id]+'" style="color:var(--danger);font-size:0.75rem">\u26A0\u66F4\u65B0\u5931\u8D25</span>' : '';
+        var curMark = cur!=='CNY' ? ' <span class="badge-cur">'+cur+'</span>' : '';
+        return '<tr><td><strong>'+h.name+'</strong>'+failMark+curMark+'</td>'+
+            '<td class="mono text-muted">'+(h.code||'-')+'</td>'+
+            '<td><span class="badge '+cat.badge+'">'+cat.name+'</span></td>'+
+            '<td class="text-muted">'+accN(h.accountId)+'</td>'+
+            '<td class="mono">'+(h.shares>1?h.shares.toLocaleString():'-')+'</td>'+
+            '<td class="mono">'+fmRaw(h.costPrice,cur)+'</td>'+
+            '<td class="mono">'+fmRaw(h.currentPrice,cur)+'</td>'+
             '<td class="mono"><strong>'+fm(mv)+'</strong></td>'+
             '<td class="mono '+(pnl>=0?'text-success':'text-danger')+'">'+fm(pnl,true)+'</td>'+
             '<td class="mono '+(pP>=0?'text-success':'text-danger')+'">'+fp(pP)+'</td>'+
-            '<td><button class="btn-ghost" onclick="showHoldingModal(\''+h.id+'\')">编辑</button> <button class="btn-ghost warning" onclick="closeHolding(\''+h.id+'\')">清仓</button> <button class="btn-ghost danger" onclick="deleteH(\''+h.id+'\')">删除</button></td></tr>';
+            '<td><button class="btn-ghost" onclick="showHoldingModal(\''+h.id+'\')">\u7F16\u8F91</button> <button class="btn-ghost warning" onclick="closeHolding(\''+h.id+'\')">\u6E05\u4ED3</button> <button class="btn-ghost danger" onclick="deleteH(\''+h.id+'\')">\u5220\u9664</button></td></tr>';
     }).join(''); }
 
-    const mc = document.getElementById('holdings-mobile-cards');
-    if(!f.length) { mc.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>暂无持仓</p></div>'; return; }
-    mc.innerHTML = f.map(h => {
-        const mv=hVal(h), cost=hCost(h), pnl=mv-cost, pP=cost>0?(pnl/cost*100):0, cat=CAT[h.category]||CAT.other, cur=h.currency||'CNY';
-        return '<div class="m-card"><div class="m-card-top"><div>'<div class="m-card-name">'+h.name+(_priceFailed[h.id]?' <span style="color:var(--danger);font-size:0.72rem">⚠失败</span>':'')+(h.code?' <span class="text-muted" style="font-size:0.72rem">'+h.code+'</span>':'')+(cur!=='CNY'?' <span class="badge-cur">'+cur+'</span>':'')+'</div>'+
-            '<div class="m-card-grid"><div class="m-card-field"><div class="label">数量</div><div class="value">'+(h.shares>1?h.shares.toLocaleString():'-')+'</div></div>'+
-            '<div class="m-card-field"><div class="label">成本价</div><div class="value">'+fmRaw(h.costPrice,cur)+'</div></div>'+
-            '<div class="m-card-field"><div class="label">现价</div><div class="value">'+fmRaw(h.currentPrice,cur)+'</div></div>'+
-            '<div class="m-card-field"><div class="label">市值(¥)</div><div class="value"><strong>'+fm(mv)+'</strong></div></div>'+
-            '<div class="m-card-field"><div class="label">盈亏(¥)</div><div class="value '+(pnl>=0?'text-success':'text-danger')+'">'+fm(pnl,true)+'</div></div>'+
-            '<div class="m-card-field"><div class="label">收益率</div><div class="value '+(pP>=0?'text-success':'text-danger')+'">'+fp(pP)+'</div></div></div>'+
-            '<div class="m-card-actions"><button class="btn btn-secondary" onclick="showHoldingModal(\''+h.id+'\')">编辑</button><button class="btn btn-warning" onclick="closeHolding(\''+h.id+'\')">清仓</button><button class="btn btn-danger" onclick="deleteH(\''+h.id+'\')">删除</button></div></div>';
+    var mc = document.getElementById('holdings-mobile-cards');
+    if(!f.length) { mc.innerHTML='<div class="empty-state"><div class="icon">\ud83d\udccb</div><p>\u6682\u65E0\u6301\u4ED3</p></div>'; return; }
+    mc.innerHTML = f.map(function(h) {
+        var mv=hVal(h), cost=hCost(h), pnl=mv-cost, pP=cost>0?(pnl/cost*100):0, cat=CAT[h.category]||CAT.other, cur=h.currency||'CNY';
+        var failMark = _priceFailed[h.id] ? ' <span style="color:var(--danger);font-size:0.72rem">\u26A0\u5931\u8D25</span>' : '';
+        var curMark = cur!=='CNY' ? ' <span class="badge-cur">'+cur+'</span>' : '';
+        var codeSpan = h.code ? ' <span class="text-muted" style="font-size:0.72rem">'+h.code+'</span>' : '';
+        return '<div class="m-card">'+
+            '<div class="m-card-top"><div><div class="m-card-name">'+h.name+failMark+codeSpan+curMark+'</div>'+
+            '<div class="m-card-sub">'+accN(h.accountId)+(h.note?' \u00B7 '+h.note:'')+'</div></div>'+
+            '<span class="badge '+cat.badge+'">'+cat.name+'</span></div>'+
+            '<div class="m-card-grid">'+
+            '<div class="m-card-field"><div class="label">\u6570\u91CF</div><div class="value">'+(h.shares>1?h.shares.toLocaleString():'-')+'</div></div>'+
+            '<div class="m-card-field"><div class="label">\u6210\u672C\u4EF7</div><div class="value">'+fmRaw(h.costPrice,cur)+'</div></div>'+
+            '<div class="m-card-field"><div class="label">\u73B0\u4EF7</div><div class="value">'+fmRaw(h.currentPrice,cur)+'</div></div>'+
+            '<div class="m-card-field"><div class="label">\u5E02\u503C(\u00A5)</div><div class="value"><strong>'+fm(mv)+'</strong></div></div>'+
+            '<div class="m-card-field"><div class="label">\u76C8\u4E8F(\u00A5)</div><div class="value '+(pnl>=0?'text-success':'text-danger')+'">'+fm(pnl,true)+'</div></div>'+
+            '<div class="m-card-field"><div class="label">\u6536\u76CA\u7387</div><div class="value '+(pP>=0?'text-success':'text-danger')+'">'+fp(pP)+'</div></div></div>'+
+            '<div class="m-card-actions">'+
+            '<button class="btn btn-secondary" onclick="showHoldingModal(\''+h.id+'\')">\u7F16\u8F91</button>'+
+            '<button class="btn btn-warning" onclick="closeHolding(\''+h.id+'\')">\u6E05\u4ED3</button>'+
+            '<button class="btn btn-danger" onclick="deleteH(\''+h.id+'\')">\u5220\u9664</button></div></div>';
     }).join('');
 }
 
@@ -1107,21 +1122,16 @@ async function updateAllPrices() {
     const wc = S.holdings.filter(h=>h.code);
     if (!wc.length) { toast('没有可更新的持仓','info'); return; }
     toast('正在更新 '+wc.length+' 项...','info');
-    _priceFailed = {};
-    let ok=0;
+    let ok=0, fail=0;
     for (const h of wc) {
         try {
             if (h.category==='fund') { const d=await fetchFundNav(h.code); h.currentPrice=d.nav; }
             else { const {m}=parseCode(h.code,h.category); const d=await fetchStockPrice(h.code,m); h.currentPrice=d.price; }
             ok++;
-        } catch(e) { _priceFailed[h.id] = e.message; }
+        } catch(e) { fail++; }
     }
-    save(); renderHoldings();
-    const failCount = Object.keys(_priceFailed).length;
-    if (failCount === 0) { toast('全部更新成功，共 '+ok+' 条','success'); }
-    else { toast('更新完成: '+ok+' 成功, '+failCount+' 失败（已标记）','error'); }
+    save(); renderHoldings(); toast('更新完成: '+ok+'成功 '+fail+'失败', ok>0?'success':'error');
 }
-
 
 // ===================== IMPORT/EXPORT =====================
 function exportData() {
@@ -1148,7 +1158,6 @@ function clearAllData() {
 // ===================== INIT =====================
 document.querySelectorAll('.nav-item').forEach(i=>i.addEventListener('click',function(){navigate(this.dataset.page)}));
 document.querySelectorAll('.bottom-nav-item').forEach(i=>i.addEventListener('click',function(){navigate(this.dataset.page)}));
-let _priceFailed = {};
 let _rt; window.addEventListener('resize',function(){clearTimeout(_rt);_rt=setTimeout(function(){const p=document.querySelector('.page.active');if(p&&p.id==='page-dashboard')renderDashboard()},300)});
 load();
 fetchRatesSilent().then(function(){renderDashboard()}).catch(function(){renderDashboard()});
