@@ -685,7 +685,7 @@ function renderHoldings() {
     if(!f.length) { body.innerHTML='<tr><td colspan="11" class="text-muted" style="text-align:center;padding:40px">暂无持仓</td></tr>'; }
     else { body.innerHTML = f.map(h => {
         const mv=hVal(h), cost=hCost(h), pnl=mv-cost, pP=cost>0?(pnl/cost*100):0, cat=CAT[h.category]||CAT.other, cur=h.currency||'CNY';
-        return '<tr><td><strong>'+h.name+'</strong>'+(cur!=='CNY'?' <span class="badge-cur">'+cur+'</span>':'')+'</td>'+
+        return '<tr>'<td><strong>'+h.name+'</strong>'+(_priceFailed[h.id]?' <span title="'+_priceFailed[h.id]+'" style="color:var(--danger);font-size:0.75rem">⚠更新失败</span>':'')+(cur!=='CNY'?' <span class="badge-cur">'+cur+'</span>':'')+'</td>'+
             '<td class="mono text-muted">'+(h.code||'-')+'</td><td><span class="badge '+cat.badge+'">'+cat.name+'</span></td>'+
             '<td class="text-muted">'+accN(h.accountId)+'</td><td class="mono">'+(h.shares>1?h.shares.toLocaleString():'-')+'</td>'+
             '<td class="mono">'+fmRaw(h.costPrice,cur)+'</td><td class="mono">'+fmRaw(h.currentPrice,cur)+'</td>'+
@@ -699,7 +699,7 @@ function renderHoldings() {
     if(!f.length) { mc.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>暂无持仓</p></div>'; return; }
     mc.innerHTML = f.map(h => {
         const mv=hVal(h), cost=hCost(h), pnl=mv-cost, pP=cost>0?(pnl/cost*100):0, cat=CAT[h.category]||CAT.other, cur=h.currency||'CNY';
-        return '<div class="m-card"><div class="m-card-top"><div><div class="m-card-name">'+h.name+(h.code?' <span class="text-muted" style="font-size:0.72rem">'+h.code+'</span>':'')+(cur!=='CNY'?' <span class="badge-cur">'+cur+'</span>':'')+'</div><div class="m-card-sub">'+accN(h.accountId)+(h.note?' · '+h.note:'')+'</div></div><span class="badge '+cat.badge+'">'+cat.name+'</span></div>'+
+        return '<div class="m-card"><div class="m-card-top"><div>'<div class="m-card-name">'+h.name+(_priceFailed[h.id]?' <span style="color:var(--danger);font-size:0.72rem">⚠失败</span>':'')+(h.code?' <span class="text-muted" style="font-size:0.72rem">'+h.code+'</span>':'')+(cur!=='CNY'?' <span class="badge-cur">'+cur+'</span>':'')+'</div>'+
             '<div class="m-card-grid"><div class="m-card-field"><div class="label">数量</div><div class="value">'+(h.shares>1?h.shares.toLocaleString():'-')+'</div></div>'+
             '<div class="m-card-field"><div class="label">成本价</div><div class="value">'+fmRaw(h.costPrice,cur)+'</div></div>'+
             '<div class="m-card-field"><div class="label">现价</div><div class="value">'+fmRaw(h.currentPrice,cur)+'</div></div>'+
@@ -1107,16 +1107,21 @@ async function updateAllPrices() {
     const wc = S.holdings.filter(h=>h.code);
     if (!wc.length) { toast('没有可更新的持仓','info'); return; }
     toast('正在更新 '+wc.length+' 项...','info');
-    let ok=0, fail=0;
+    _priceFailed = {};
+    let ok=0;
     for (const h of wc) {
         try {
             if (h.category==='fund') { const d=await fetchFundNav(h.code); h.currentPrice=d.nav; }
             else { const {m}=parseCode(h.code,h.category); const d=await fetchStockPrice(h.code,m); h.currentPrice=d.price; }
             ok++;
-        } catch(e) { fail++; }
+        } catch(e) { _priceFailed[h.id] = e.message; }
     }
-    save(); renderHoldings(); toast('更新完成: '+ok+'成功 '+fail+'失败', ok>0?'success':'error');
+    save(); renderHoldings();
+    const failCount = Object.keys(_priceFailed).length;
+    if (failCount === 0) { toast('全部更新成功，共 '+ok+' 条','success'); }
+    else { toast('更新完成: '+ok+' 成功, '+failCount+' 失败（已标记）','error'); }
 }
+
 
 // ===================== IMPORT/EXPORT =====================
 function exportData() {
@@ -1143,6 +1148,7 @@ function clearAllData() {
 // ===================== INIT =====================
 document.querySelectorAll('.nav-item').forEach(i=>i.addEventListener('click',function(){navigate(this.dataset.page)}));
 document.querySelectorAll('.bottom-nav-item').forEach(i=>i.addEventListener('click',function(){navigate(this.dataset.page)}));
+let _priceFailed = {};
 let _rt; window.addEventListener('resize',function(){clearTimeout(_rt);_rt=setTimeout(function(){const p=document.querySelector('.page.active');if(p&&p.id==='page-dashboard')renderDashboard()},300)});
 load();
 fetchRatesSilent().then(function(){renderDashboard()}).catch(function(){renderDashboard()});
