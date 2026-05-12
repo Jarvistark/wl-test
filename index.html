@@ -336,7 +336,7 @@
 
     <!-- Liabilities -->
     <div class="page" id="page-liabilities">
-        <div class="page-header"><h2>负债管理</h2><button class="btn btn-primary" onclick="showLiabilityModal()">+ 添加负债</button></div>
+        <div class="page-header"><h2>负债管理</h2><button class="btn btn-primary" onclick="showLiabModal()">+ 添加负债</button></div>
         <div class="table-card"><div style="overflow-x:auto"><table>
             <thead><tr><th>名称</th><th>账户</th><th>金额</th><th>年利率</th><th>月供</th><th>备注</th><th>操作</th></tr></thead>
             <tbody id="liabilities-body"></tbody>
@@ -959,20 +959,35 @@ function renderAccounts() {
     if (!S.accounts.length) { grid.innerHTML=mc.innerHTML='<div class="empty-state"><div class="icon">🏦</div><p>暂无账户</p></div>'; return; }
     const items = S.accounts.map(acc => {
         const hs = S.holdings.filter(h=>h.accountId===acc.id);
-        return { acc, hs, tv: hs.reduce((s,h)=>s+hVal(h),0) };
+        const tv = hs.reduce((s,h)=>s+hVal(h), 0);
+        const tc = hs.reduce((s,h)=>s+hCost(h), 0);
+        const pnl = tv - tc;
+        const pnlPct = tc > 0 ? (pnl/tc*100) : 0;
+        return { acc, hs, tv, pnl, pnlPct };
     });
-    grid.innerHTML = items.map(({acc,hs,tv}) =>
-        '<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;transition:all 0.2s">'+
+    grid.innerHTML = items.map(({acc,hs,tv,pnl,pnlPct}) =>
+        '<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;transition:all 0.2s;cursor:pointer" onclick="goAccountHoldings(\''+acc.id+'\')">'+
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><span style="font-weight:500;font-size:1rem">'+acc.name+'</span><span class="badge badge-other">'+(ACCTYPES[acc.type]||acc.type)+'</span></div>'+
-        '<div style="font-family:\'DM Mono\',monospace;font-size:1.35rem;font-weight:500;margin-bottom:8px">'+fm(tv,true)+'</div>'+
-        '<div style="font-size:0.78rem;color:var(--text-muted)">'+hs.length+' 项持仓</div>'+
-        '<div style="margin-top:14px;display:flex;gap:8px"><button class="btn-ghost" onclick="showAccountModal(\''+acc.id+'\')">编辑</button><button class="btn-ghost danger" onclick="delAcc(\''+acc.id+'\')">删除</button></div></div>'
+        '<div style="font-family:\'DM Mono\',monospace;font-size:1.35rem;font-weight:500;margin-bottom:4px">'+fm(tv,true)+'</div>'+
+        '<div style="font-family:\'DM Mono\',monospace;font-size:0.9rem;margin-bottom:8px" class="'+(pnl>=0?'text-success':'text-danger')+'">'+(pnl>=0?'+':'')+fm(pnl)+' ('+fp(pnlPct)+')</div>'+
+        '<div style="font-size:0.78rem;color:var(--text-muted)">'+hs.length+' 项持仓 · 点击查看详情</div>'+
+        '<div style="margin-top:14px;display:flex;gap:8px" onclick="event.stopPropagation()"><button class="btn-ghost" onclick="showAccountModal(\''+acc.id+'\')">编辑</button><button class="btn-ghost danger" onclick="delAcc(\''+acc.id+'\')">删除</button></div></div>'
     ).join('');
-    mc.innerHTML = items.map(({acc,hs,tv}) =>
-        '<div class="m-account-card"><div class="m-account-top"><span style="font-weight:500;font-size:1rem">'+acc.name+'</span><span class="badge badge-other">'+(ACCTYPES[acc.type]||acc.type)+'</span></div>'+
-        '<div class="m-account-value">'+fm(tv,true)+'</div><div class="m-account-count">'+hs.length+' 项持仓</div>'+
-        '<div class="m-account-actions"><button class="btn btn-secondary" onclick="showAccountModal(\''+acc.id+'\')">编辑</button><button class="btn btn-danger" onclick="delAcc(\''+acc.id+'\')">删除</button></div></div>'
+    mc.innerHTML = items.map(({acc,hs,tv,pnl,pnlPct}) =>
+        '<div class="m-account-card" onclick="goAccountHoldings(\''+acc.id+'\')" style="cursor:pointer">'+
+        '<div class="m-account-top"><span style="font-weight:500;font-size:1rem">'+acc.name+'</span><span class="badge badge-other">'+(ACCTYPES[acc.type]||acc.type)+'</span></div>'+
+        '<div class="m-account-value">'+fm(tv,true)+'</div>'+
+        '<div style="font-family:\'DM Mono\',monospace;font-size:0.88rem;margin-bottom:6px" class="'+(pnl>=0?'text-success':'text-danger')+'">'+(pnl>=0?'+':'')+fm(pnl)+' ('+fp(pnlPct)+')</div>'+
+        '<div class="m-account-count">'+hs.length+' 项持仓 · 点击查看详情</div>'+
+        '<div class="m-account-actions" onclick="event.stopPropagation()"><button class="btn btn-secondary" onclick="showAccountModal(\''+acc.id+'\')">编辑</button><button class="btn btn-danger" onclick="delAcc(\''+acc.id+'\')">删除</button></div></div>'
     ).join('');
+}
+function goAccountHoldings(accId) {
+    navigate('holdings');
+    setTimeout(function() {
+        document.getElementById('filter-account').value = accId;
+        renderHoldings();
+    }, 50);
 }
 function showAccountModal(id) {
     const acc = id ? S.accounts.find(a=>a.id===id) : null;
