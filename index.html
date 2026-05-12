@@ -237,7 +237,13 @@ var _priceFailed={};
 
 function mktCurrency(m){return m==='hk'?'HKD':m==='us'?'USD':'CNY'}
 function parseCode(code,cat){if(!code)return{m:'a',c:''};var s=code.toLowerCase();if(cat==='fund')return{m:'fund',c:code};if(s.indexOf('hk')===0)return{m:'hk',c:code.slice(2)};if(s.indexOf('us')===0)return{m:'us',c:code.slice(2)};if(s.indexOf('sh')===0)return{m:'a',c:code.slice(2)};if(s.indexOf('sz')===0)return{m:'a',c:code.slice(2)};return{m:'a',c:code}}
-function buildCode(m,raw){if(!raw)return'';if(m==='hk')return'hk'+raw.padStart(5,'0');if(m==='us')return'us'+raw.toUpperCase();return(raw[0]==='6'||raw[0]==='9'||raw[0]==='5')?'sh'+raw:'sz'+raw}
+function buildCode(m,raw){
+    if(!raw)return'';
+    var cleaned=raw.replace(/^(hk|us|sh|sz)/i,'');
+    if(m==='hk')return'hk'+cleaned.padStart(5,'0');
+    if(m==='us')return'us'+cleaned.toUpperCase();
+    return(cleaned[0]==='6'||cleaned[0]==='9'||cleaned[0]==='5')?'sh'+cleaned:'sz'+cleaned;
+}
 function gid(){return'id_'+Date.now()+'_'+Math.random().toString(36).slice(2,8)}
 function isMobile(){return window.innerWidth<=900}
 function fm(v,compact){var s=v<0?'-':'',a=Math.abs(v);if(compact){if(a>=1e8)return s+'¥'+(a/1e8).toFixed(2)+'亿';if(a>=1e4)return s+'¥'+(a/1e4).toFixed(2)+'万'}return s+'¥'+a.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})}
